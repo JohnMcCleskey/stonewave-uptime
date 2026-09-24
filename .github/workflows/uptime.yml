@@ -1,0 +1,50 @@
+# Outside uptime check for StoneWave's hosted services. GET-only, no
+# credentials against the monitored sites. Alerts go to the signed StoneWave
+# ops relay with an uptime-only secret. If the relay itself can't be reached,
+# this run fails, and GitHub emails whoever last edited the cron line below.
+name: uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      drill:
+        description: "fail = test uptime_down; recover = clear it; fallback = test the failed-run email; none = normal run"
+        type: choice
+        options: [none, fail, recover, fallback]
+        default: none
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .uptime-state
+          # Never a prefix of a saved key, so every attempt (re-runs too)
+          # restores the newest state, not its own run's older copy.
+          key: uptime-restore-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: uptime-state-
+      - name: Check targets
+        env:
+          SP_ALERT_URL: ${{ secrets.SP_ALERT_URL }}
+          SP_ALERT_SECRET: ${{ secrets.SP_UPTIME_ALERT_SECRET }}
+          UPTIME_DRILL: ${{ inputs.drill || 'none' }}
+        run: python3 uptime_check.py --targets targets.json --state .uptime-state/state.json
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        if: always()
+        with:
+          path: .uptime-state
+          key: uptime-state-${{ github.run_id }}-${{ github.run_attempt }}

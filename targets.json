@@ -1,0 +1,20 @@
+{
+  "tenant": "SW-UPTIME",
+  "targets": [
+    {
+      "name": "orders-health",
+      "url": "https://orders.stonewave.life/health",
+      "expect": { "status": [200], "json": { "ok": true } }
+    },
+    {
+      "name": "orders-login",
+      "url": "https://orders.stonewave.life/",
+      "expect": { "status": [301, 302, 303, 307, 308], "location": "/login" }
+    },
+    {
+      "name": "www",
+      "url": "https://www.stonewave.life/",
+      "expect": { "status": [200] }
+    }
+  ]
+}
