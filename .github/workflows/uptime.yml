@@ -43,7 +43,7 @@ jobs:
           SP_ALERT_SECRET: ${{ secrets.SP_UPTIME_ALERT_SECRET }}
           UPTIME_DRILL: ${{ inputs.drill || 'none' }}
         run: python3 uptime_check.py --targets targets.json --state .uptime-state/state.json
-      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: always()
         with:
           path: .uptime-state
